@@ -2,13 +2,14 @@ use std::{
     net::SocketAddrV4,
     time::{Duration, Instant},
 };
+use serde::{Deserialize, Serialize};
 
 use super::state::NodeState;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VoteResponse {
-    pub id: usize,
     pub term: usize,
+    pub response: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -20,21 +21,23 @@ pub struct Log {
     pub entries: Vec<LogEntry>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Leader {
-    id: usize,
-    term: usize,
+    pub id: usize,
+    pub term: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct LogEntry {
-    term: usize,
-    server_id: usize,
+pub enum LogEntry {
+    Heartbeat { term: usize, id: usize } 
 }
 
+#[derive(Debug, Clone)]
 pub struct ServerConfig {
     pub timeout: Duration,
 }
 
+#[derive(Debug, Clone)]
 pub struct Server {
     pub id: usize,
     pub term: usize,
@@ -45,10 +48,11 @@ pub struct Server {
     pub voted_for: Option<Peer>,
     pub config: ServerConfig,
     pub timeout: Option<Instant>,
+    pub current_leader: Option<Leader>,
 }
 
 impl Server {
-    pub fn new(config: ServerConfig, id: usize, address: SocketAddrV4, peers: Vec<Peer>) -> Self {
+    pub fn new(config: ServerConfig, id: usize, address: SocketAddrV4) -> Self {
         Self {
             id,
             term: 0,
@@ -59,6 +63,7 @@ impl Server {
             voted_for: None,
             config,
             timeout: None,
+            current_leader: None
         }
     }
 
